@@ -4,9 +4,10 @@ Proyecto backend para la clínica **Salud Vital**. Permite gestionar especialist
 
 ## Autor
 
-- **Nombre:** [Tu Nombre]
-- **Correo:** [Tu Correo]
+- **Nombre:** eimy rodriguez
+  
 - **SENA - Examen Backend Node.js + AdonisJS**
+
 
 ---
 
