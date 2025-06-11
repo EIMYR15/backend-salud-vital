@@ -1,15 +1,17 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Especialista from '#models/especialista'
+import { DateTime } from 'luxon'
+import { createEspecialistaValidator } from '#validators/especialista'
+import { updateEspecialistaValidator } from '#validators/update_especialista'
 
 export default class EspecialistasController {
   /**
    * Listar todos los especialistas activos
    */
   async index({ request }: HttpContext) {
-    const { orderBy = 'nombre_completo', order = 'asc' } = request.qs()
+    const { orderBy = 'id', order = 'desc' } = request.qs()
     const especialistas = await Especialista
       .query()
-      .where('activo', true)
       .orderBy(orderBy, order)
     return especialistas
   }
@@ -18,19 +20,9 @@ export default class EspecialistasController {
    * Crear un especialista
    */
   async store({ request, response }: HttpContext) {
-    const data = request.only([
-      'nombre_completo',
-      'especialidad',
-      'registro_profesional',
-      'dias_horarios'
-    ])
-    // Validaciones aquí (puedes agregar un validator aparte)
-    try {
-      const especialista = await Especialista.create({ ...data, activo: true })
-      return response.created(especialista)
-    } catch (error) {
-      return response.badRequest(error)
-    }
+    const payload = await request.validateUsing(createEspecialistaValidator)
+    const especialista = await Especialista.create(payload)
+    return response.created(especialista)
   }
 
   /**
@@ -48,15 +40,14 @@ export default class EspecialistasController {
   async update({ params, request, response }: HttpContext) {
     const especialista = await Especialista.find(params.id)
     if (!especialista) return response.notFound({ message: 'Especialista no encontrado' })
-    const data = request.only([
-      'nombre_completo',
-      'especialidad',
-      'registro_profesional',
-      'dias_horarios'
-    ])
-    especialista.merge(data)
-    await especialista.save()
-    return especialista
+    try {
+      const data = await request.validateUsing(updateEspecialistaValidator)
+      especialista.merge(data)
+      await especialista.save()
+      return especialista
+    } catch (error) {
+      return response.badRequest(error.messages || error.message)
+    }
   }
 
   /**
@@ -65,8 +56,7 @@ export default class EspecialistasController {
   async destroy({ params, response }: HttpContext) {
     const especialista = await Especialista.find(params.id)
     if (!especialista) return response.notFound({ message: 'Especialista no encontrado' })
-    especialista.activo = false
-    especialista.deletedAt = new Date()
+    especialista.deletedAt = DateTime.now()
     await especialista.save()
     return response.ok({ message: 'Especialista inactivado' })
   }
@@ -77,7 +67,6 @@ export default class EspecialistasController {
   async restore({ params, response }: HttpContext) {
     const especialista = await Especialista.find(params.id)
     if (!especialista) return response.notFound({ message: 'Especialista no encontrado' })
-    especialista.activo = true
     especialista.deletedAt = null
     await especialista.save()
     return response.ok({ message: 'Especialista restaurado' })

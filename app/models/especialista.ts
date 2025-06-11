@@ -5,20 +5,24 @@ export default class Especialista extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
-  @column()
-  declare nombre_completo: string
+  @column({columnName: 'nombre_completo'})
+  declare nombreCompleto: string
 
   @column()
   declare especialidad: string
 
-  @column()
-  declare registro_profesional: string
+  @column({columnName: 'registro_profesional'})
+  declare registroProfesional: string
 
   @column({
-    serialize: (value: any) => value ? JSON.parse(value) : [],
-    prepare: (value: any) => JSON.stringify(value),
+    columnName: 'dias_horarios',
+  prepare: (value: any[]) => JSON.stringify(value),
+  serialize: (value: string) => {
+    try { return JSON.parse(value) }
+    catch { return [] }
+  },
   })
-  declare dias_horarios: any
+  declare diasHorarios: any
 
   @column()
   declare activo: boolean
